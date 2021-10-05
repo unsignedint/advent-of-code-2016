@@ -1,11 +1,11 @@
 open Containers
 open Angstrom
+open Aoc
 
 let code =
-  Aoc.(
-    sep_by (char '-') U.word <* char '-' >>= fun a ->
-    U.number >>= fun b ->
-    char '[' *> U.word <* char ']' >>= fun c -> return (String.concat "" a, b, c))
+  sep_by (char '-') U.word <* char '-' >>= fun a ->
+  U.number >>= fun b ->
+  char '[' *> U.word <* char ']' >>= fun c -> return (String.concat "" a, b, c)
 
 type entry = { name : string; code : int; checksum : string }
 
@@ -13,14 +13,6 @@ let parse_line l =
   match parse_string ~consume:All code l with
   | Ok (name, code, checksum) -> { name; code; checksum }
   | Error msg -> failwith msg
-
-module CharHashtbl = CCHashtbl.Make (struct
-  type t = char
-
-  let equal x y = Char.code x = Char.code y
-
-  let hash = Char.code
-end)
 
 let check_entry entry =
   let h = CharHashtbl.create 10 in
@@ -47,7 +39,7 @@ let rotate_string n s =
   |> Array.map Char.of_int_exn |> String.of_array
 
 let () =
-  let data = Aoc.read_lines "input.txt" |> List.map String.trim in
+  let data = read_lines "input.txt" |> List.map String.trim in
   print_endline (String.concat ";" data);
   let entries = List.map parse_line data |> List.map check_entry |> List.keep_some in
   let code = List.fold_left (fun acc e -> acc + e.code) 0 entries in

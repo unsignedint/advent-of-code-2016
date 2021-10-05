@@ -1,21 +1,13 @@
 open Containers
 open Angstrom
-
-(* parsing *)
-module P = struct
-  let is_whitespace = function '\x20' | '\x0a' | '\x0d' | '\x09' -> true | _ -> false
-
-  let is_digit = function '0' .. '9' -> true | _ -> false
-end
-
-let whitespace = take_while P.is_whitespace
+open Aoc
 
 let number = take_while1 P.is_digit >>| int_of_string
 
 let triple =
-  number <* whitespace >>= fun a ->
-  number <* whitespace >>= fun b ->
-  number >>= fun c -> return (a, b, c)
+  U.number <* U.whitespace >>= fun a ->
+  U.number <* U.whitespace >>= fun b ->
+  U.number >>= fun c -> return (a, b, c)
 
 let parse_triple s =
   match parse_string ~consume:All triple s with
@@ -28,7 +20,7 @@ let is_triangle (a, b, c) =
   match numbers with [ x; y; z ] when x + y > z -> true | _ -> false
 
 let () =
-  let data = Aoc.read_lines "input.txt" |> List.map String.trim in
+  let data = read_lines "input.txt" |> List.map String.trim in
   let triples = List.map parse_triple data in
   let triangles = List.filter is_triangle triples in
   Printf.printf "part1 = %d\n" (List.length triangles);

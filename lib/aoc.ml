@@ -34,15 +34,17 @@ end
 module U = struct
   open Angstrom
 
+  let whitespace = take_while P.is_whitespace
+
   let number = take_while1 P.is_digit >>| int_of_string
 
   let word = take_while1 P.is_str
 end
 
-(* module CharH = struct
-     type t = char
+module CharHashtbl = CCHashtbl.Make (struct
+  type t = char
 
-     let equal x y = Char.code x = Char.code y
+  let equal x y = Char.code x = Char.code y
 
-     let hash = Char.code
-   end *)
+  let hash = Char.code
+end)
