@@ -1,0 +1,3 @@
+(executable
+ (name day04)
+ (libraries containers angstrom aoc))
