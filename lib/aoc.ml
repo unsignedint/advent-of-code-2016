@@ -16,6 +16,7 @@ let walk (x, y) = function
   | East -> (x + 1, y)
   | West -> (x - 1, y)
 
+(* https://rosettacode.org/wiki/Matrix_transposition#OCaml *)
 let rec transpose m =
   assert (not (List.is_empty m));
   if List.mem [] m then [] else List.map List.hd m :: transpose (List.map List.tl m)
@@ -48,3 +49,16 @@ module CharHashtbl = CCHashtbl.Make (struct
 
   let hash = Char.code
 end)
+
+module CharHashtblU = struct
+  (* sort first by frequency descending, then key ascending *)
+  let sorted_v_k (h : 'a CharHashtbl.t) =
+    CharHashtbl.to_list h
+    |> List.sort (fun (k1, v1) (k2, v2) ->
+           match Int.compare v2 v1 with 0 -> Char.compare k1 k2 | c -> c)
+
+  let from_string s =
+    let h = CharHashtbl.create (String.length s) in
+    List.iter (fun c -> CharHashtbl.incr ~by:1 h c) (String.to_list s);
+    h
+end
