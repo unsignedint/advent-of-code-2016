@@ -4,10 +4,14 @@ open Angstrom
 
 type instr = Rect of int * int | RotCol of int * int | RotRow of int * int
 
-let string_of_instr = function
+(*
+ NOT USING THIS ANYMORE.. use ppx_deriving instead!
+ 
+ let string_of_instr = function
   | Rect (r, c) -> Format.sprintf "Rect(%d,%d)" r c
   | RotCol (r, c) -> Format.sprintf "RotCol(%d,%d)" r c
-  | RotRow (r, c) -> Format.sprintf "RotRow(%d,%d)" r c
+  | RotRow (r, c) -> Format.sprintf "RotRow(%d,%d)" r c 
+  *)
 
 let instrp =
   let rectp =

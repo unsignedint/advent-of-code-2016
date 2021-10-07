@@ -24,7 +24,8 @@ EOF
 cat <<EOF > $DAY/dune
 (executable
  (name day$DAY)
- (libraries containers aoc))
+ (preprocess (pps ppx_deriving.show))
+ (libraries containers iter aoc))
 EOF
 
 touch $DAY/input.txt

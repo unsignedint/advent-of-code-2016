@@ -1,3 +1,5 @@
 (executable
  (name day08)
+ (preprocess
+  (pps ppx_deriving.show))
  (libraries containers iter aoc))
