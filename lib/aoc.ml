@@ -27,7 +27,7 @@ module P = struct
 
   let is_digit = function '0' .. '9' -> true | _ -> false
 
-  let is_str = function 'a' .. 'z' -> true | _ -> false
+  let is_str = function 'a' .. 'z' | 'A' .. 'Z' -> true | _ -> false
 
   let is_separator = function '-' | '_' -> true | _ -> false
 end
