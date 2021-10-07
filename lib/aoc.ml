@@ -62,3 +62,93 @@ module CharHashtblU = struct
     List.iter (fun c -> CharHashtbl.incr ~by:1 h c) (String.to_list s);
     h
 end
+
+let list_of_pair (a, b) = [ a; b ]
+
+(* 2D board operations *)
+module Board = struct
+  open Bigarray
+
+  let create_int rows cols ?(f = fun i j -> (i * cols) + j) () =
+    Array2.init Int8_unsigned c_layout rows cols f
+
+  let create_char rows cols ?(c = '.') () =
+    Array2.init Bigarray.Char c_layout rows cols (fun _ _ -> c)
+
+  let print_int a =
+    for i = 0 to Array2.dim1 a - 1 do
+      for j = 0 to Array2.dim2 a - 1 do
+        Printf.printf "%02d " a.{i, j}
+      done;
+      print_endline ""
+    done
+
+  let print_char a =
+    for i = 0 to Array2.dim1 a - 1 do
+      for j = 0 to Array2.dim2 a - 1 do
+        Printf.printf "%c" a.{i, j}
+      done;
+      print_endline ""
+    done
+
+  let get_row row a = Array.init (Array2.dim2 a) (fun j -> a.{row, j})
+
+  let get_col col a = Array.init (Array2.dim1 a) (fun i -> a.{i, col})
+
+  let set_row row data a =
+    for j = 0 to Array2.dim2 a - 1 do
+      a.{row, j} <- data.(j)
+    done
+
+  let set_col col data a =
+    for i = 0 to Array2.dim1 a - 1 do
+      a.{i, col} <- data.(i)
+    done
+
+  let rem x y =
+    let result = x mod y in
+    if result >= 0 then result else result + y
+
+  let rotate_left ?(n = 1) a =
+    let n = rem n (Array.length a) in
+    let b = Array.copy a in
+    Array.blit b n a 0 (Array.length a - n);
+    Array.blit b 0 a (Array.length a - n) n
+
+  let rotate_right ?(n = 1) a =
+    let n = rem n (Array.length a) in
+    let b = Array.copy a in
+    Array.blit b (Array.length a - n) a 0 n;
+    Array.blit b 0 a n (Array.length a - n)
+
+  (*
+     let rotate_left a =
+       let dim = Array.length a in
+       let temp = a.(0) in
+       for i = 1 to dim - 1 do
+         a.(i - 1) <- a.(i)
+       done;
+       a.(dim - 1) <- temp
+
+     let rotate_right a =
+       let dim = Array.length a in
+       let temp = a.(dim - 1) in
+       for i = dim - 1 downto 1 do
+         a.(i) <- a.(i - 1)
+       done;
+       a.(0) <- temp *)
+
+  let update_region f x y num_rows num_cols a =
+    for i = 0 to num_rows - 1 do
+      for j = 0 to num_cols - 1 do
+        a.{y + i, x + j} <- f a.{y + i, x + j}
+      done
+    done
+
+  let fold f init a =
+    let ii = Iter.Infix.(0 -- (Array2.dim1 a - 1)) in
+    let jj = Iter.Infix.(0 -- (Array2.dim2 a - 1)) in
+    Iter.fold (fun acc i -> Iter.fold (fun acc j -> f acc a.{i, j}) acc jj) init ii
+end
+
+let repeat f n = Iter.iter f Iter.Infix.(1 -- n)
