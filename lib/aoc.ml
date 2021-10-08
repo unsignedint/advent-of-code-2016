@@ -65,6 +65,8 @@ end
 
 let list_of_pair (a, b) = [ a; b ]
 
+let pair_of_list = function [ a; b ] -> (a, b) | _ -> failwith "invalid list"
+
 (* 2D board operations *)
 module Board = struct
   open Bigarray
