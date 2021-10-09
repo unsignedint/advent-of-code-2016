@@ -37,7 +37,14 @@ end
      0 ) *)
 let initial =
   ( [|
-      [ Chip "promethium"; Generator "promethium" ];
+      [
+        Chip "promethium";
+        Generator "promethium";
+        Chip "elerium";
+        Generator "elerium";
+        Chip "dilithium";
+        Generator "dilithium";
+      ];
       [
         Generator "cobalt";
         Generator "curium";
@@ -205,12 +212,12 @@ let process initial_state =
       let st = entry.state in
       let num_steps = entry.num_steps in
       if SeenStateSet.mem (seen_struct_of_st st) seen then aux seen q'
-      else (
-        Printf.printf "step (%d) valid - %B\n" num_steps (valid_state st);
+      else
+        (* Printf.printf "step (%d) valid - %B\n" num_steps (valid_state st); *)
         (* print_state st; *)
         let seen' = SeenStateSet.add (seen_struct_of_st st) seen in
         let data, floor_idx = st in
-        if floor_idx = 3 && List.length data.(floor_idx) = 10 then (
+        if floor_idx = 3 && List.length data.(floor_idx) = 14 then (
           Printf.printf "FOUND/?! => %d\n" num_steps;
           aux seen' q' (* (num_steps, st)) *))
         else
@@ -221,7 +228,7 @@ let process initial_state =
                 CCSimple_queue.push { state = c; num_steps = num_steps + 1 } acc)
               q' new_candidates
           in
-          aux seen' q'')
+          aux seen' q''
   in
 
   aux SeenStateSet.empty
