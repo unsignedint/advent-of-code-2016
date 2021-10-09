@@ -16,30 +16,62 @@ end
 
 type q_entry = { state : st; num_steps : int }
 
-let initial =
-  ( [|
-      [ Chip "hydrogen"; Chip "lithium" ];
-      [ Generator "hydrogen" ];
-      [ Generator "lithium" ];
-      [];
-    |],
-    0 )
+type seen_entry = { num_pairs : int; num_chips : int; num_gens : int }
+[@@deriving show, eq, ord]
+
+type seen_struct = seen_entry array * int [@@deriving show, eq, ord]
+
+module SeenState = struct
+  type t = seen_struct
+
+  let compare = compare_seen_struct
+end
+
 (* let initial =
    ( [|
-       [ Chip "promethium"; Generator "promethium" ];
-       [
-         Generator "cobalt";
-         Generator "curium";
-         Generator "ruthenium";
-         Generator "plutonium";
-       ];
-       [ Chip "cobalt"; Chip "curium"; Chip "ruthenium"; Chip "plutonium" ];
+       [ Chip "hydrogen"; Chip "lithium" ];
+       [ Generator "hydrogen" ];
+       [ Generator "lithium" ];
        [];
      |],
      0 ) *)
+let initial =
+  ( [|
+      [ Chip "promethium"; Generator "promethium" ];
+      [
+        Generator "cobalt";
+        Generator "curium";
+        Generator "ruthenium";
+        Generator "plutonium";
+      ];
+      [ Chip "cobalt"; Chip "curium"; Chip "ruthenium"; Chip "plutonium" ];
+      [];
+    |],
+    0 )
 
 module StringSet = Set.Make (String)
 module StateSet = Set.Make (State)
+
+let make_seen_entry lst =
+  let chips, gens =
+    List.partition_filter_map (function Chip x -> `Left x | Generator x -> `Right x) lst
+  in
+  let chips', gens' = (StringSet.of_list chips, StringSet.of_list gens) in
+  let inter = StringSet.inter chips' gens' in
+  let rem_chips = StringSet.diff chips' inter in
+  let rem_gens = StringSet.diff gens' inter in
+  {
+    num_pairs = StringSet.cardinal inter;
+    num_chips = StringSet.cardinal rem_chips;
+    num_gens = StringSet.cardinal rem_gens;
+  }
+
+let seen_struct_of_st st =
+  let data, floor_idx = st in
+  let data' = Array.map make_seen_entry data in
+  (data', floor_idx)
+
+module SeenStateSet = Set.Make (SeenState)
 
 let print_state (data, floor_idx) =
   Array.iteri
@@ -62,8 +94,8 @@ let bad_floor lst =
 let find_moves lst =
   if List.length lst = 0 then failwith "Invalid state, nothing to move"
   else
-    let all_pairs = Aoc.extract 2 lst in
-    let all_singles = Aoc.extract 1 lst in
+    let all_pairs = List.diagonal lst |> List.map Aoc.list_of_pair in
+    let all_singles = List.map (fun el -> [ el ]) lst in
     let result =
       [
         List.map (fun el -> Up el) all_pairs
@@ -172,15 +204,15 @@ let process initial_state =
       let entry, q' = CCSimple_queue.pop_exn q in
       let st = entry.state in
       let num_steps = entry.num_steps in
-      if StateSet.mem st seen then aux seen q'
-      else
-        (* Printf.printf "step (%d) valid - %B\n" num_steps (valid_state st); *)
+      if SeenStateSet.mem (seen_struct_of_st st) seen then aux seen q'
+      else (
+        Printf.printf "step (%d) valid - %B\n" num_steps (valid_state st);
         (* print_state st; *)
-        let seen' = StateSet.add st seen in
+        let seen' = SeenStateSet.add (seen_struct_of_st st) seen in
         let data, floor_idx = st in
-        if floor_idx = 3 && List.length data.(floor_idx) = 4 then (
-          print_endline "FOUND/?!";
-          (num_steps, st))
+        if floor_idx = 3 && List.length data.(floor_idx) = 10 then (
+          Printf.printf "FOUND/?! => %d\n" num_steps;
+          aux seen' q' (* (num_steps, st)) *))
         else
           let new_candidates = find_candidates st |> List.filter valid_state in
           let q'' =
@@ -189,10 +221,10 @@ let process initial_state =
                 CCSimple_queue.push { state = c; num_steps = num_steps + 1 } acc)
               q' new_candidates
           in
-          aux seen' q''
+          aux seen' q'')
   in
 
-  aux StateSet.empty
+  aux SeenStateSet.empty
     CCSimple_queue.(empty |> push { state = initial_state; num_steps = 0 })
 
 let () =
