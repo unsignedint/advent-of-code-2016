@@ -26,7 +26,7 @@ let parse s =
 
 module CharMap = Map.Make (Char)
 
-let execute instructions =
+let execute instructions registers =
   let rec aux registers pc =
     if pc < 0 || pc >= Array.length instructions then registers
     else
@@ -45,12 +45,21 @@ let execute instructions =
           let operand = match x with Reg a -> CharMap.find a registers | Val a -> a in
           if operand = 0 then aux registers (pc + 1) else aux registers (pc + os)
   in
-  aux CharMap.(empty |> add 'a' 0 |> add 'b' 0 |> add 'c' 0 |> add 'd' 0) 0
+  aux registers 0
 
 let () =
   let data = Aoc.read_lines "input.txt" |> List.map String.trim in
   print_endline (String.concat ";" data);
   let instructions = List.map parse data |> Array.of_list in
   (* Array.iter (fun instr -> print_endline (show_instr instr)) instructions; *)
-  let registers = execute instructions in
-  CharMap.iter (fun k v -> Printf.printf "register %c - %d\n" k v) registers
+  let part1 =
+    execute instructions
+      CharMap.(empty |> add 'a' 0 |> add 'b' 0 |> add 'c' 0 |> add 'd' 0)
+  in
+  (* CharMap.iter (fun k v -> Printf.printf "register %c - %d\n" k v) part1; *)
+  Printf.printf "part 1 = %d\n" (CharMap.find 'a' part1);
+  let part2 =
+    execute instructions
+      CharMap.(empty |> add 'a' 0 |> add 'b' 0 |> add 'c' 1 |> add 'd' 0)
+  in
+  Printf.printf "part 2 = %d\n" (CharMap.find 'a' part2)
