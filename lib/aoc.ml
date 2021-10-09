@@ -39,6 +39,14 @@ module U = struct
 
   let number = take_while1 P.is_digit >>| int_of_string
 
+  let integer =
+    lift2
+      (fun a b -> a * b)
+      (whitespace *> peek_char_fail >>= function
+       | '-' -> advance 1 >>| fun () -> -1
+       | _ -> return 1)
+      number
+
   let word = take_while1 P.is_str
 end
 
