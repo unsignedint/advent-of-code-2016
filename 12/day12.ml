@@ -27,23 +27,19 @@ let parse s =
 module CharMap = Map.Make (Char)
 
 let execute instructions registers =
+  let update_reg_val k f r = CharMap.add k (f (CharMap.find k r)) r in
+  let get_operand = function Reg a -> CharMap.find a registers | Val a -> a in
+
   let rec aux registers pc =
     if pc < 0 || pc >= Array.length instructions then registers
     else
       (* Printf.printf "%02d %s\n" pc (show_instr instructions.(pc)); *)
       match instructions.(pc) with
-      | Cpy (x, d) ->
-          let operand = match x with Reg a -> CharMap.find a registers | Val a -> a in
-          aux (CharMap.add d operand registers) (pc + 1)
-      | Inc a ->
-          let value = CharMap.find a registers + 1 in
-          aux (CharMap.add a value registers) (pc + 1)
-      | Dec a ->
-          let value = CharMap.find a registers - 1 in
-          aux (CharMap.add a value registers) (pc + 1)
+      | Cpy (x, d) -> aux (CharMap.add d (get_operand x) registers) (pc + 1)
+      | Inc k -> aux (update_reg_val k (fun x -> x + 1) registers) (pc + 1)
+      | Dec k -> aux (update_reg_val k (fun x -> x - 1) registers) (pc + 1)
       | Jnz (x, os) ->
-          let operand = match x with Reg a -> CharMap.find a registers | Val a -> a in
-          if operand = 0 then aux registers (pc + 1) else aux registers (pc + os)
+          if get_operand x = 0 then aux registers (pc + 1) else aux registers (pc + os)
   in
   aux registers 0
 
