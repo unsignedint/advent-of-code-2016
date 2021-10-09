@@ -2,4 +2,4 @@
  (name day11)
  (preprocess
   (pps ppx_deriving.show ppx_deriving.ord ppx_deriving.eq))
- (libraries containers iter aoc))
+ (libraries containers containers-data iter aoc))
