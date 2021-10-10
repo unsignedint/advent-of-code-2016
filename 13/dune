@@ -1,0 +1,5 @@
+(executable
+ (name day13)
+ (preprocess
+  (pps ppx_deriving.show ppx_deriving.ord ppx_deriving.eq))
+ (libraries containers containers-data iter aoc))
