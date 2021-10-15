@@ -1,5 +1,7 @@
 open Containers
 
+let identity x = x
+
 let read_all_lines fname = IO.(with_in fname read_lines_l)
 
 let read_lines fname =
@@ -163,6 +165,8 @@ end
 
 let repeat f n = Iter.iter f Iter.Infix.(1 -- n)
 
+let repeat_fold f init n = Iter.fold f init Iter.Infix.(1 -- n)
+
 let rec extract k list =
   if k <= 0 then [ [] ]
   else
@@ -202,3 +206,19 @@ module MakeBFS (O : Map.OrderedType) = struct
     in
     aux SeenMap.empty CCSimple_queue.(empty |> push initial_state)
 end
+
+(**
+  [memoise] will cache previous executions in a _Hashtbl_. Use the [init] parameter
+  to set starting capacity of the structure.
+
+  _NOTE_ will only work with a single parameter function. Write a wrapper to handle
+  additional parameters, if required.
+*)
+let memoise f =
+  let h = Hashtbl.create 10000 in
+  fun x ->
+    try Hashtbl.find h x
+    with Not_found ->
+      let y = f x in
+      Hashtbl.add h x y;
+      y
