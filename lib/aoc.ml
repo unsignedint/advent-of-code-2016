@@ -172,3 +172,33 @@ let rec extract k list =
         let with_h = List.map (fun l -> h :: l) (extract (k - 1) tl) in
         let without_h = extract k tl in
         with_h @ without_h
+
+module MakeBFS (O : Map.OrderedType) = struct
+  module SeenMap = Map.Make (O)
+
+  (**
+    [bfs] performs a breadth-first search, starting from [initial_state] until the 
+    condition [f_end_condition state] is true; and a pair of [state * seen] is returned.
+
+    [f_seen_kv state] maps to a key and value to set in the seen map to prune search
+    [f_make_candidates state] should return a new list of candidate states to try
+  *)
+  let bfs ~initial_state ~f_end_condition ~f_seen_kv ~f_make_candidates =
+    let rec aux seen q =
+      let curr_state, q = CCSimple_queue.pop_exn q in
+      let k, v = f_seen_kv curr_state in
+      (* skip if we've already seen this! *)
+      if SeenMap.mem k seen then aux seen q (* end if we've found our solution *)
+      else if f_end_condition curr_state then (curr_state, seen)
+      else
+        (* add to seen set *)
+        let seen' = SeenMap.add k v seen in
+        (* add new frontier to queue *)
+        let q' =
+          f_make_candidates curr_state
+          |> List.fold_left (fun acc candidate -> CCSimple_queue.push candidate acc) q
+        in
+        aux seen' q'
+    in
+    aux SeenMap.empty CCSimple_queue.(empty |> push initial_state)
+end

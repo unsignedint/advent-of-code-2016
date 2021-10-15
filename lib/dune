@@ -1,3 +1,3 @@
 (library
  (name aoc)
- (libraries containers iter angstrom))
+ (libraries containers containers-data iter angstrom))

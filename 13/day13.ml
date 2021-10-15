@@ -32,66 +32,24 @@ type coord = int * int [@@deriving show, eq, ord]
 
 type entry = { pos : coord; steps : int }
 
-module CoordSet = CCSet.Make (struct
+module CoordBFS = MakeBFS (struct
   type t = coord
 
   let compare = compare_coord
 end)
 
-let search cell_func start target =
-  let rec aux seen q =
-    let { pos; steps }, q = CCSimple_queue.pop_exn q in
-    if compare_coord pos target = 0 then steps
-    else
-      (* add to seen set! *)
-      let seen' = CoordSet.add pos seen in
-      (* add new frontier to queue *)
-      let q' =
-        neighbours pos
-        |> List.filter (fun pos ->
-               match cell_func pos with Wall -> false | Open -> true)
-        |> List.filter (fun pos -> not (CoordSet.mem pos seen))
-        |> List.fold_left
-             (fun acc pos -> CCSimple_queue.push { pos; steps = steps + 1 } acc)
-             q
-      in
-      aux seen' q'
-  in
-  aux CoordSet.empty CCSimple_queue.(empty |> push { pos = start; steps = 0 })
-
-module CoordMap = CCMap.Make (struct
-  type t = coord
-
-  let compare = compare_coord
-end)
-
-let flood cell_func start num_steps =
-  let rec aux seen q =
-    let { pos; steps }, q = CCSimple_queue.pop_exn q in
-    if steps = num_steps then seen
-    else
-      (* add to seen set! *)
-      let seen' = CoordMap.add pos steps seen in
-      (* add new frontier to queue *)
-      let q' =
-        neighbours pos
-        |> List.filter (fun (x, y) -> x >= 0 && y >= 0)
-        |> List.filter (fun pos ->
-               match cell_func pos with Wall -> false | Open -> true)
-        |> List.filter (fun pos -> not (CoordMap.mem pos seen))
-        |> List.fold_left
-             (fun acc pos -> CCSimple_queue.push { pos; steps = steps + 1 } acc)
-             q
-      in
-      aux seen' q'
-  in
-  aux CoordMap.empty CCSimple_queue.(empty |> push { pos = start; steps = 0 })
+let flood_fill cell_func start target =
+  CoordBFS.bfs ~initial_state:{ pos = start; steps = 0 }
+    ~f_end_condition:(fun { pos; _ } -> compare_coord pos target = 0)
+    ~f_seen_kv:(fun { pos; steps } -> (pos, steps))
+    ~f_make_candidates:(fun { pos; steps } ->
+      neighbours pos
+      |> List.filter (fun (x, y) -> x >= 0 && y >= 0)
+      |> List.filter (fun pos -> match cell_func pos with Wall -> false | Open -> true)
+      |> List.map (fun pos -> { pos; steps = steps + 1 }))
 
 let () =
   (* print_grid (make_cell_func 10) 10 7; *)
-  let result = search (make_cell_func 1362) (1, 1) (31, 39) in
-  printf "part1 = %d\n" result;
-  let raw = flood (make_cell_func 1362) (1, 1) 60 in
-  let result = CoordMap.filter (fun _ v -> v <= 50) raw |> CoordMap.cardinal in
-  printf "part2 = %d\n" result
-(* CoordMap.iter (fun k v -> printf "%s - %d\n" (show_coord k) v) raw *)
+  let result, seen = flood_fill (make_cell_func 1362) (1, 1) (31, 39) in
+  printf "!part1 = %d\n" result.steps;
+  printf "!part2 = %d\n" CoordBFS.SeenMap.(filter (fun _ v -> v <= 50) seen |> cardinal)

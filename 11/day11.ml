@@ -113,30 +113,6 @@ let find_moves lst =
     in
     List.flatten result
 
-(* let chips, gens =
-     List.partition_filter_map
-       (function Chip x -> `Left x | Generator x -> `Right x)
-       lst
-   in
-   let chips', gens' = (StringSet.of_list chips, StringSet.of_list gens) in
-   let inter = StringSet.inter chips' gens' in
-   (* let rem_chips = StringSet.diff chips' inter in
-      let rem_gens = StringSet.diff gens' inter in *)
-   (* iterate pairs first *)
-   let acc =
-     List.fold_left
-       (fun acc el -> Up [ Chip el; Generator el ] :: acc)
-       [] (StringSet.to_list inter)
-   in
-   (* then all chips individually *)
-   List.fold_left
-     (fun acc el -> Up [ Chip el ] :: Down [ Chip el ] :: acc)
-     acc (StringSet.to_list chips') *)
-(* in
-   List.fold_left
-     (fun acc el -> Up [ Generator el ] :: Down [ Generator el ] :: acc)
-     acc' (StringSet.to_list rem_gens) *)
-
 let make_candidate state floor_idx move =
   (* Printf.printf "MOVE %s\n" (show_move move); *)
   let floor = state.(floor_idx) in
@@ -174,36 +150,6 @@ let find_candidates (state, floor_idx) =
 
 let valid_state (state, _) = Array.filter bad_floor state |> Array.length = 0
 
-(* let process initial_state =
-   let rec aux acc st =
-     let data, floor_idx = st in
-     if floor_idx = 4 && List.length data.(floor_idx) = 4 then (
-       print_endline "FOUND/?!";
-       (acc, `Stop))
-     else
-       let next_states = candidates st |> List.filter valid_state in
-       List.fold_while (fun acc ns -> (aux (acc + 1) ns, `Stop)) acc next_states
-   in
-   aux 0 initial_state *)
-
-(* let process initial_state =
-   let rec aux steps seen = function
-     | st :: xs ->
-         if StateSet.mem st seen then aux steps seen xs
-         else (
-           Printf.printf "step (%d)\n%s\nvalid - %B\n" steps (show_st st) (valid_state st);
-           let seen' = StateSet.add st seen in
-           let data, floor_idx = st in
-           if floor_idx = 3 && List.length data.(floor_idx) = 4 then (
-             print_endline "FOUND/?!";
-             Some (steps, st))
-           else
-             let new_candidates = find_candidates st |> List.filter valid_state in
-             aux (steps + 1) seen' (new_candidates @ xs))
-     | [] -> None
-   in
-   aux 0 StateSet.empty [ initial_state ] *)
-
 let process initial_state =
   let rec aux seen q =
     if CCSimple_queue.is_empty q then failwith "not found?"
@@ -219,7 +165,8 @@ let process initial_state =
         let data, floor_idx = st in
         if floor_idx = 3 && List.length data.(floor_idx) = 14 then (
           Printf.printf "FOUND/?! => %d\n" num_steps;
-          aux seen' q' (* (num_steps, st)) *))
+          (* aux seen' q' *)
+          (num_steps, st))
         else
           let new_candidates = find_candidates st |> List.filter valid_state in
           let q'' =
@@ -230,9 +177,21 @@ let process initial_state =
           in
           aux seen' q''
   in
-
   aux SeenStateSet.empty
     CCSimple_queue.(empty |> push { state = initial_state; num_steps = 0 })
+
+module Day11BFS = Aoc.MakeBFS (SeenState)
+
+let compute initial_state =
+  Day11BFS.bfs
+    ~initial_state:{ state = initial_state; num_steps = 0 }
+    ~f_end_condition:(fun { state; _ } ->
+      let data, floor_idx = state in
+      floor_idx = 3 && List.length data.(floor_idx) = 14)
+    ~f_seen_kv:(fun { state; num_steps } -> (seen_struct_of_st state, num_steps))
+    ~f_make_candidates:(fun { state; num_steps } ->
+      find_candidates state |> List.filter valid_state
+      |> List.map (fun state -> { state; num_steps = num_steps + 1 }))
 
 let () =
   (* let data = Aoc.read_lines "input.txt" |> List.map String.trim in
@@ -243,5 +202,7 @@ let () =
        next_states *)
   (* let s = List.hd (process initial) in
      Printf.printf "STATE\n%s\nvalid - %B\n" (show_st s) (valid_state s) *)
-  let steps, s = process initial in
-  Printf.printf "FINAL %d\n%s\nvalid - %B\n" steps (show_st s) (valid_state s)
+  (* let steps, s = process initial in
+     Printf.printf "FINAL %d\n%s\nvalid - %B\n" steps (show_st s) (valid_state s) *)
+  let { state; num_steps }, _ = compute initial in
+  Printf.printf "REDO %d\n%s\nvalid - %B\n" num_steps (show_st state) (valid_state state)
