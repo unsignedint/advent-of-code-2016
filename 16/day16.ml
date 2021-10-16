@@ -4,21 +4,20 @@ open Format
 let round s =
   let a = String.to_array s in
   let b =
-    Array.rev a
-    |> Array.map (function '1' -> '0' | '0' -> '1' | _ -> failwith "invalid input")
+    Array.map (function '1' -> '0' | '0' -> '1' | _ -> failwith "invalid input") a
+    |> Array.rev
   in
   String.of_array a ^ "0" ^ String.of_array b
 
 let checksum (s : string) =
   let rec aux s =
     let cs =
-      String.to_list s |> List.chunks 2 |> List.map Aoc.pair_of_list
-      |> List.map (function a, b when Char.equal a b -> '1' | _, _ -> '0')
-      |> String.of_list
+      List.chunks 2 s
+      |> List.map (function [ a; b ] when Char.equal a b -> '1' | _ -> '0')
     in
-    if String.length cs mod 2 = 1 then cs else aux cs
+    if List.length cs mod 2 = 1 then String.of_list cs else aux cs
   in
-  aux s
+  aux (String.to_list s)
 
 let fill_disk s count =
   let rec aux s =
