@@ -225,3 +225,42 @@ let memoise f =
       let y = f x in
       Hashtbl.add h x y;
       y
+
+module NumberTheory = struct
+  (* implementation ported from https://rosettacode.org/wiki/Chinese_remainder_theorem#Procedural *)
+  let mul_inv a' b' =
+    let a = ref a' in
+    let b = ref b' in
+    let b0 = b' in
+    let x0, x1 = (ref 0, ref 1) in
+    while !a > 1 do
+      let q = !a / !b in
+      let tmp = rem !a !b in
+      a := !b;
+      b := tmp;
+      let tmp = !x0 in
+      x0 := !x1 - (q * !x0);
+      x1 := tmp
+    done;
+    if !x1 < 0 then x1 := !x1 + b0;
+    !x1
+
+  (**
+    [crt n a] solves the Chinese Remainder Theorem for the set of equations:
+      x = a1 mod n1, x = a2 mod n2, ... x = ai mod ni
+
+    For example, to solve x in: x mod 4 = 3 and x mod 5 = 4
+    [crt [4;5] [3;4] = 19]
+    *)
+  let crt n a =
+    let prod = List.reduce_exn (fun a b -> a * b) n in
+    let zipped = List.combine n a in
+    let sum =
+      List.fold_left
+        (fun acc (ni, ai) ->
+          let p = prod / ni in
+          acc + (ai * mul_inv p ni * p))
+        0 zipped
+    in
+    rem sum prod
+end
