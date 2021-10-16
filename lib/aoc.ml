@@ -2,6 +2,13 @@ open Containers
 
 let identity x = x
 
+(**
+  [rem] calculates a typical Python-style modulo operation: [rem a b] == [a % b]
+*)
+let rem x y =
+  let result = x mod y in
+  if result >= 0 then result else result + y
+
 let read_all_lines fname = IO.(with_in fname read_lines_l)
 
 let read_lines fname =
@@ -116,10 +123,6 @@ module Board = struct
     for i = 0 to Array2.dim1 a - 1 do
       a.{i, col} <- data.(i)
     done
-
-  let rem x y =
-    let result = x mod y in
-    if result >= 0 then result else result + y
 
   let rotate_left ?(n = 1) a =
     let n = rem n (Array.length a) in
