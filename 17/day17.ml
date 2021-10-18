@@ -12,63 +12,39 @@ type door = Open | Closed
 
 let dir_to_char = function North -> "U" | South -> "D" | West -> "L" | East -> "R"
 
+type coord = int * int [@@deriving show, eq, ord]
+
+type entry = { pos : coord; path : string } [@@deriving show]
+
 let valid_moves (x, y) path =
   Digest.(string (secret ^ path) |> to_hex)
   |> (fun s -> String.sub s 0 4 |> String.to_list)
-  |> List.map (function 'a' .. 'f' -> Open | _ -> Closed)
   |> List.combine [ North; South; West; East ]
   |> List.filter_map (function
-       | North, Open when y < 3 -> Some North
-       | South, Open when y > 0 -> Some South
-       | West, Open when x > 0 -> Some West
-       | East, Open when x < 3 -> Some East
+       | dir, 'b' .. 'f' ->
+           let x, y = Aoc.walk (x, y) dir in
+           let path = path ^ dir_to_char dir in
+           Some { pos = (x, y); path }
        | _, _ -> None)
+  |> List.filter (fun { pos = x, y; _ } -> x >= 0 && x < 4 && y >= 0 && y < 4)
 
-type coord = int * int [@@deriving show, eq, ord]
-
-type entry = { pos : coord; path : string }
-
-let part1 =
-  let rec aux q =
-    let { pos; path }, q = CCSimple_queue.pop_exn q in
-    (* check end condition *)
-    if compare_coord pos (3, 0) = 0 then path
-    else
-      let q' =
-        valid_moves pos path
-        |> List.map (fun m ->
-               let pos = Aoc.walk pos m in
-               let path = path ^ dir_to_char m in
-               { pos; path })
-        |> List.fold_left (fun acc candidate -> CCSimple_queue.push candidate acc) q
-      in
-      aux q'
-  in
-  aux CCSimple_queue.(empty |> push { pos = (0, 3); path = "" })
-
-let part2 =
+let full_bfs =
   let rec aux paths q =
-    if CCDeque.is_empty q then paths
+    if CCSimple_queue.is_empty q then paths
     else
-      let { pos; path } = CCDeque.take_front q in
-      printf "%d\n" (List.length paths);
-      (* check end condition *)
+      let { pos; path }, q = CCSimple_queue.pop_exn q in
+      (* end of successful path *)
       if compare_coord pos (3, 0) = 0 then aux (path :: paths) q
-      else (
-        valid_moves pos path
-        |> List.map (fun m ->
-               let pos = Aoc.walk pos m in
-               let path = path ^ dir_to_char m in
-               { pos; path })
-        |> List.iter (fun candidate -> CCDeque.push_back q candidate);
-        aux paths q)
+      else
+        let q' =
+          valid_moves pos path
+          |> List.fold_left (fun acc candidate -> CCSimple_queue.push candidate acc) q
+        in
+        aux paths q'
   in
-  let q = CCDeque.create () in
-  CCDeque.push_back q { pos = (0, 3); path = "" };
-  aux [] q
+  aux [] CCSimple_queue.(empty |> push { pos = (0, 3); path = "" })
 
 let () =
-  let solve = part1 in
-  printf "part1 = %s\n" solve;
-  let solve = part2 in
-  printf "part2 = %d\n" (String.length (List.hd solve))
+  let paths = full_bfs in
+  printf "part1 = %s\n" (List.rev paths |> List.hd);
+  printf "part2 = %d\n" (List.hd paths |> String.length)
