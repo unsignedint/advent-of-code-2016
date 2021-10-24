@@ -270,3 +270,31 @@ module NumberTheory = struct
     in
     rem sum prod
 end
+
+(* c.f. https://github.com/ocaml-batteries-team/batteries-included/pull/513 *)
+let permutations l =
+  (* do a choice in [l]. [right] contain elements not to choose from. *)
+  let rec choose_first among right =
+    match among with
+    | [] -> List.cons [] List.empty
+    | [ x ] -> perms_starting_with x right
+    | x :: among' ->
+        (* choose [x], or don't (in which case put it in [right]) *)
+        List.append
+          (perms_starting_with x (among' @ right))
+          (choose_first among' (x :: right))
+  (* all permutations of [l], prefixed with [x] *)
+  and perms_starting_with x l = List.map (fun l -> x :: l) (choose_first l []) in
+  choose_first l []
+
+(* c.f. https://github.com/ocaml-batteries-team/batteries-included/pull/513 *)
+let combinations l =
+  let rec gen l =
+    match l with
+    | [] -> List.cons [] List.empty
+    | x :: l' ->
+        let tl = gen l' in
+        let node = List.append tl (List.map (fun l -> x :: l) tl) in
+        node
+  in
+  gen l

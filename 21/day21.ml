@@ -141,4 +141,14 @@ let () =
   let answer = execute instructions "abcdefgh" |> String.of_array in
   Printf.printf "part1 = %s\n" answer;
   let answer' = execute_rev instructions "fbgdceah" |> String.of_array in
-  Printf.printf "part2 = %s\n" answer'
+  Printf.printf "part2 = %s\n" answer';
+  let combinations = permutations (String.to_list "abcdefgh") in
+  let result =
+    List.find
+      (fun s ->
+        String.equal
+          (execute instructions (String.of_list s) |> String.of_array)
+          "fbgdceah")
+      combinations
+  in
+  Printf.printf "brute force part2 = %s\n" (result |> String.of_list)
