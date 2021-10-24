@@ -57,6 +57,8 @@ module U = struct
       number
 
   let word = take_while1 P.is_str
+
+  let until_eol = take_till (function '\n' | '\r' -> true | _ -> false)
 end
 
 module CharHashtbl = CCHashtbl.Make (struct
@@ -83,6 +85,18 @@ end
 let list_of_pair (a, b) = [ a; b ]
 
 let pair_of_list = function [ a; b ] -> (a, b) | _ -> failwith "invalid list"
+
+let rotate_left ?(n = 1) a =
+  let n = rem n (Array.length a) in
+  let b = Array.copy a in
+  Array.blit b n a 0 (Array.length a - n);
+  Array.blit b 0 a (Array.length a - n) n
+
+let rotate_right ?(n = 1) a =
+  let n = rem n (Array.length a) in
+  let b = Array.copy a in
+  Array.blit b (Array.length a - n) a 0 n;
+  Array.blit b 0 a n (Array.length a - n)
 
 (* 2D board operations *)
 module Board = struct
@@ -124,17 +138,9 @@ module Board = struct
       a.{i, col} <- data.(i)
     done
 
-  let rotate_left ?(n = 1) a =
-    let n = rem n (Array.length a) in
-    let b = Array.copy a in
-    Array.blit b n a 0 (Array.length a - n);
-    Array.blit b 0 a (Array.length a - n) n
+  let rotate_left = rotate_left
 
-  let rotate_right ?(n = 1) a =
-    let n = rem n (Array.length a) in
-    let b = Array.copy a in
-    Array.blit b (Array.length a - n) a 0 n;
-    Array.blit b 0 a n (Array.length a - n)
+  let rotate_right = rotate_right
 
   (*
      let rotate_left a =
