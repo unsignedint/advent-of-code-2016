@@ -1,0 +1,4 @@
+(executable
+ (name day24)
+ (preprocess (pps ppx_deriving.show ppx_deriving.ord ppx_deriving.eq))
+ (libraries angstrom containers iter aoc))
